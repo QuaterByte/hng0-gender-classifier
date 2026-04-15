@@ -1,0 +1,6 @@
+com\hng\internship\classifier\Response.class
+com\hng\internship\classifier\ClassifierApplication.class
+com\hng\internship\classifier\Data.class
+com\hng\internship\classifier\Error.class
+com\hng\internship\classifier\api\ApiController.class
+com\hng\internship\classifier\Genderize.class

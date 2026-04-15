@@ -19,7 +19,6 @@ public class ClassifierApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ClassifierApplication.class, args);
-		System.out.println(Instant.now().toString());
 	}
 
 }

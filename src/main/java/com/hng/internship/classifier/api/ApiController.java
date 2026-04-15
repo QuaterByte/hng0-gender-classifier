@@ -5,7 +5,9 @@ import com.hng.internship.classifier.Data;
 import com.hng.internship.classifier.Error;
 import com.hng.internship.classifier.Genderize;
 import com.hng.internship.classifier.Response;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 
@@ -28,19 +30,21 @@ public class ApiController {
     }
 
     @GetMapping(path = "/classify", produces = "application/json")
-    public ResponseEntity<?> getClassifier(@RequestParam(required = false) Object name){
+    public ResponseEntity<?> getClassifier(@RequestParam String name){
 
-        if(name == null || name.toString().trim().isEmpty())
+        if(name == null || name.trim().isEmpty())
             return  ResponseEntity.badRequest().body(new Error("Missing or empty name"));
 
-        if(!(name instanceof String))
-            return ResponseEntity.unprocessableContent().body(new Error("Non-string name"));
 
+        ResponseEntity<Genderize> genderize;
 
-         ResponseEntity<Genderize>genderize = client.get().uri("https://api.genderize.io?name={name}", name)
+         try{genderize = client.get().uri("https://api.genderize.io?name={name}", name)
                 .retrieve().toEntity(Genderize.class);
-         if(!genderize.getStatusCode().is2xxSuccessful())
+         } catch (Exception e) {
              return errorResponseEntity();
+         }
+         if(!genderize.getStatusCode().is2xxSuccessful())
+             return ResponseEntity.status(HttpStatusCode.valueOf(502)).body("Request limit reached");
 
          Data data = genderizeToData(genderize.getBody());
          if(data.getGender() == null || data.getSample_size() == 0)
@@ -51,6 +55,11 @@ public class ApiController {
     @ExceptionHandler({UnresolvedAddressException.class, MismatchedInputException.class})
     public ResponseEntity<Error> errorResponseEntity(){
         return ResponseEntity.internalServerError().body(new Error("Upstream or server failure"));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Error> illegalArgumentObject(){
+        return ResponseEntity.unprocessableContent().body(new Error("name is not a string"));
     }
 
 
